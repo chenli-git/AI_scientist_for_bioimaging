@@ -23,5 +23,6 @@ def main():
 def list_collections():
     chroma = Chroma(persist_directory=CHROMA_DIR)
     print("Collections:", chroma._client.list_collections())
+    
 if __name__ == "__main__":
     list_collections()
