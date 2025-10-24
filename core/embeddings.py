@@ -4,7 +4,7 @@ from config.settings import OPENAI_API_KEY, EMBED_MODEL, CHROMA_DIR
 
 def get_embeddings():
     """Initialize OpenAI embedding model."""
-    return OpenAIEmbeddings(model=EMBED_MODEL, api_key=OPENAI_API_KEY)
+    return OpenAIEmbeddings(model=EMBED_MODEL, api_key=OPENAI_API_KEY, max_retries=10)
 
 def get_vectorstore(collection_name='test'):
     """Load (or create empty) ChromaDB vectorstore."""
@@ -23,6 +23,6 @@ def main():
 def list_collections():
     chroma = Chroma(persist_directory=CHROMA_DIR)
     print("Collections:", chroma._client.list_collections())
-    
+
 if __name__ == "__main__":
     list_collections()

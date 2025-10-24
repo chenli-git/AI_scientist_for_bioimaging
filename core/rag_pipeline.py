@@ -1,35 +1,45 @@
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables import RunnablePassthrough
-from core.embeddings import get_vectorstore
-from core.llm_client import get_llm
+"""
+core/rag_pipeline.py
+--------------------
+Unified RAG pipeline that can work with any agent class.
 
-def build_rag_chain():
-    """Build a simple RAG pipeline using LangChain Runnables."""
-    llm = get_llm()
-    retriever = get_vectorstore().as_retriever(search_kwargs={"k": 3})
-    # Prompt: specialized for biomedical context
-    prompt = ChatPromptTemplate.from_template("""
-        You are an assistant for question-answering tasks. use the following pieces of retrieved context to answer the question if the context has relevant infomation. 
-        if you dont know the answer, just say that you dont't know.
+Usage:
+    rag = RAGPipeline(agent_cls=AIScientistAgent)
+    rag.run("Explain adaptive optics in microscopy")
 
-        Context:
-        {context}
+You can easily plug in new agents like:
+    rag = RAGPipeline(agent_cls=PaperReviewerAgent)
+"""
 
-        Question:
-        {question}
-        """)
-    
-    # Runnable chain: retriever → prompt → LLM → output
-    chain = (
-        {"context": retriever, "question": RunnablePassthrough()}
-        | prompt
-        | llm
-        | StrOutputParser()
-    )
-    return chain
+from agents.AI_scientist_agent import AIScientistAgent
+from typing import Type
+
+class RAGPipeline:
+    def __init__(self, agent_cls: Type, **agent_kwargs):
+        """
+        Initialize RAG pipeline with a specific agent class.
+
+        Parameters
+        ----------
+        agent_cls : class
+            The agent class to instantiate (e.g., AIScientistAgent)
+        agent_kwargs : dict
+            Optional keyword arguments passed to the agent.
+        """
+        self.agent = agent_cls(**agent_kwargs)
+
+    def run(self, query: str):
+        """Execute RAG pipeline and return result."""
+        print(f"\n[{self.agent.__class__.__name__}] Processing query: {query}\n")
+        return self.agent.run(query)
 
 
 
 if __name__ == "__main__":
-    a = 1
+    rag = RAGPipeline()
+    while True:
+        query = input("🧠 Enter your scientific question (or 'exit'): ")
+        if query.lower() == "exit":
+            break
+        response = rag.run(query)
+        print(f"\n🧩 Answer:\n{response}\n")

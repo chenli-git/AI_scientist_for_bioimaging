@@ -1,77 +1,61 @@
+"""
+app_gradio.py
+-------------
+Gradio ChatGPT-style interface for AI Scientist Agent.
+"""
+
 import gradio as gr
-from core.rag_pipeline import build_rag_chain
+from core.rag_pipeline import RAGPipeline
+from agents.AI_scientist_agent import AIScientistAgent
 
-# Build the RAG chain once
-rag_chain = build_rag_chain()
 
-def chat_with_rag(user_input):
-    """Run a simple user query through the RAG pipeline."""
+# ------------------------------------------------------------------
+# Initialize default RAG pipeline and agent
+# ------------------------------------------------------------------
+rag = RAGPipeline(agent_cls=AIScientistAgent)
+
+
+# ------------------------------------------------------------------
+# Chat function with streaming
+# ------------------------------------------------------------------
+def chat_stream(message, history):
+    """Stream tokens from the AI Scientist agent in ChatGPT style."""
+    user_query = message.strip()
+    if not user_query:
+        yield "Please type a question."
+        return
+
     try:
-        result = rag_chain.invoke(user_input)
-        return result
-    except Exception as e:
-        return f"⚠️ Error: {str(e)}"
-# 🔹 Streaming response function
-# ------------------------------
-def stream_response(user_input):
-    """Stream tokens from the Runnable RAG chain as they are generated."""
-    try:
-        # Yield tokens one by one
-        for chunk in rag_chain.stream(user_input):
-            if isinstance(chunk, str):
-                yield chunk
-            elif isinstance(chunk, dict) and "answer" in chunk:
-                yield chunk["answer"]
+        partial_text = ""
+        for chunk in rag.agent.stream(user_query):
+            partial_text += chunk
+            yield partial_text
     except Exception as e:
         yield f"⚠️ Error: {str(e)}"
 
-# ------------------------------
-# 🔹 Chatbot logic
-# ------------------------------
-def user_message(message, history):
-    """Immediately show user's message, then wait for model output."""
-    history = history + [[message, None]]  # Show message instantly
-    return "", history  # Clear input box, keep history updated
 
+# ------------------------------------------------------------
+# Build ChatGPT-like interface
+# ------------------------------------------------------------
+def build_chat_interface():
+    return gr.ChatInterface(
+        fn=chat_stream,
+        title="🧠 AI Scientist Agent",
+        description=(
+            "Ask scientific or biomedical research questions. "
+            "The AI Scientist agent uses retrieval-augmented reasoning "
+            "and domain expertise to generate evidence-based answers."
+        ),
+        theme=gr.themes.Soft(primary_hue="indigo"),
+        examples=[
+            ["What are the latest deep-learning models for neuron segmentation?"],
+            ["Explain the role of mitochondrial metabolism in astrocyte-neuron coupling."],
+            ["How does adaptive optics improve light-sheet microscopy?"],
+        ],
+        chatbot=gr.Chatbot(height=500, show_copy_button=True),
+    )
 
-def bot_response(history):
-    """Stream model output to the latest user message."""
-    user_query = history[-1][0]  # Get the most recent user question
-    bot_message = ""  # Collect streamed tokens
-
-    for chunk in stream_response(user_query):
-        bot_message += chunk
-        history[-1][1] = bot_message  # Update the bot's latest message
-        yield history  # Stream update to UI
-
-
-
-# ------------------------------
-# 🔹 Launch Gradio interface
-# ------------------------------
-def main():
-    with gr.Blocks(theme="soft") as demo:
-        gr.Markdown(
-            "# 🧬 AI Scientist RAG Chatbot (Runnable Pipeline)\n"
-            "Ask questions grounded in your biomedical papers. "
-            "Built with **LangChain Runnables + ChromaDB + OpenAI API**."
-        )
-
-        chatbot = gr.Chatbot(height=450, label="AI Scientist")
-        msg = gr.Textbox(
-            placeholder="Ask me about biomedical image segmentation...",
-            label="Your Question",
-        )
-        clear = gr.Button("🧹 Clear Chat")
-
-        # When user hits Enter → instantly show message, then trigger streaming bot
-        msg.submit(user_message, [msg, chatbot], [msg, chatbot]).then(
-            bot_response, chatbot, chatbot
-        )
-        clear.click(lambda: None, None, chatbot, queue=False)
-
-    demo.launch(debug=True)
-
+# ------------------------------------------------------------
 if __name__ == "__main__":
-    main()
-
+    demo = build_chat_interface()
+    demo.launch(debug=True)

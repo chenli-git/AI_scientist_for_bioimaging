@@ -6,30 +6,52 @@ Date: 2025
 """
 
 import argparse
-from core.rag_pipeline import build_rag_chain
-from ui.app_gradio import main as gradio_app
+from core.rag_pipeline import RAGPipeline
+from agents.AI_scientist_agent import AIScientistAgent
+# from agents.PaperReviewerAgent import PaperReviewerAgent  # example future agent
 
 def run_cli():
-    """
-    Run in command-line mode for quick testing.
-    Uses the RAG Runnable pipeline directly.
-    """
-    rag_chain = build_rag_chain()
-
-    print("🧬 AI Scientist Agent (CLI Mode)")
-    print("Type 'exit' to quit.\n")
+    """Simple command-line chat loop."""
+    rag = RAGPipeline(agent_cls=AIScientistAgent)
+    print("🧠 AI Scientist CLI mode. Type 'exit' to quit.\n")
 
     while True:
-        user_input = input("You: ")
-        if user_input.lower() in ["exit", "quit"]:
+        query = input("You: ").strip()
+        if not query or query.lower() in {"exit", "quit"}:
             print("👋 Goodbye!")
             break
 
         try:
-            result = rag_chain.invoke(user_input)
-            print(f"AI: {result}\n")
+            response = ""
+            for chunk in rag.agent.stream(query):
+                print(chunk, end="", flush=True)
+                response += chunk
+            print("\n")  # newline after streaming output
         except Exception as e:
-            print(f"⚠️ Error: {str(e)}\n")
+            print(f"⚠️ Error: {e}\n")
+
+
+# Import UI only when needed (so HPC jobs don’t require Gradio)
+def run_gradio():
+    from ui.app_gradio import build_chat_interface
+    demo = build_chat_interface()
+    demo.launch(debug=True)
+
+def main():
+    parser = argparse.ArgumentParser(description="AI Scientist Multi-Agent System")
+    parser.add_argument(
+        "-m", "--mode",
+        choices=["gradio", "cli"],
+        default="gradio",
+        help="Choose how to run the app: gradio (web UI) or cli (terminal)",
+    )
+    args = parser.parse_args()
+
+    if args.mode == "gradio":
+        run_gradio()
+    elif args.mode == "cli":
+        run_cli()
+
 
 if __name__ == "__main__":
-    run_cli()
+    main()
