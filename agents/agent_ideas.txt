@@ -1,0 +1,13 @@
+AIscientist
+RAG scientific reasoning. for literature Q&A
+
+imageanalyst
+suggest workfolw for image analysis, interpret microscopy image results, suggest analyisi workflow
+stepbystep Fiji/python workflow plan. 
+
+PaperRivewer
+Paper summarization&critique  for paper review
+
+ModelTrainerAgent
+Design DL traning pipeline, expert knowledge for MONAI. code generation
+

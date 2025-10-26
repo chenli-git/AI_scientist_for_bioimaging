@@ -36,10 +36,10 @@ class RAGPipeline:
 
 
 if __name__ == "__main__":
-    rag = RAGPipeline()
+    rag = RAGPipeline(AIScientistAgent)
     while True:
         query = input("🧠 Enter your scientific question (or 'exit'): ")
-        if query.lower() == "exit":
+        if query.lower() in ["exit", "quit"]:
             break
         response = rag.run(query)
         print(f"\n🧩 Answer:\n{response}\n")

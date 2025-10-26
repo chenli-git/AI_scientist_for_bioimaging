@@ -5,41 +5,43 @@ Gradio ChatGPT-style interface for AI Scientist Agent.
 """
 
 import gradio as gr
+import uuid
 from core.rag_pipeline import RAGPipeline
 from agents.AI_scientist_agent import AIScientistAgent
-
-
-# ------------------------------------------------------------------
-# Initialize default RAG pipeline and agent
-# ------------------------------------------------------------------
-rag = RAGPipeline(agent_cls=AIScientistAgent)
-
-
-# ------------------------------------------------------------------
-# Chat function with streaming
-# ------------------------------------------------------------------
-def chat_stream(message, history):
-    """Stream tokens from the AI Scientist agent in ChatGPT style."""
-    user_query = message.strip()
-    if not user_query:
-        yield "Please type a question."
-        return
-
-    try:
-        partial_text = ""
-        for chunk in rag.agent.stream(user_query):
-            partial_text += chunk
-            yield partial_text
-    except Exception as e:
-        yield f"⚠️ Error: {str(e)}"
+from core.memory_manager import MemoryManager
 
 
 # ------------------------------------------------------------
 # Build ChatGPT-like interface
 # ------------------------------------------------------------
-def build_chat_interface():
+def build_interface(agent_cls):
+    """Construct the streaming Gradio Chat UI for the selected agent."""
+    rag = RAGPipeline(agent_cls=AIScientistAgent)
+    memory_manager = MemoryManager()
+
+    def stream_agent(user_query, history):
+        """Handles streaming responses while keeping contextualized memory."""
+        if not user_query.strip():
+            yield "Please enter a question."
+            return
+
+        # Convert history list of [user, ai] pairs → readable text
+        history_text = "\n".join([f"User: {h[0]}\nAI: {h[1]}" for h in history]) if history else ""
+
+        # Contextualize the query using memory
+        contextualized_query = memory_manager.contextualize(user_query, history_text)
+
+        # Each chat window gets its own session_id
+        session_id = "gradio-session-" + uuid.uuid4().hex[:8]
+
+        output = ""
+        for chunk in rag.agent.stream(contextualized_query, session_id=session_id):
+            output += chunk
+            yield output
+
+
     return gr.ChatInterface(
-        fn=chat_stream,
+        fn=stream_agent,
         title="🧠 AI Scientist Agent",
         description=(
             "Ask scientific or biomedical research questions. "
@@ -57,5 +59,5 @@ def build_chat_interface():
 
 # ------------------------------------------------------------
 if __name__ == "__main__":
-    demo = build_chat_interface()
+    demo = build_interface()
     demo.launch(debug=True)
