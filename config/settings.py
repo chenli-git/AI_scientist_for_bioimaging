@@ -7,6 +7,7 @@ load_dotenv()
 # Access the API key and store constants
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 LLM_MODEL = "gpt-5-nano"        # or "gpt-4o"
+VISION_LLM_MODEL = "gpt-4o-mini"
 EMBED_MODEL = "text-embedding-3-small"    # vector embedding
 CHROMA_DIR = "data/chroma_db"
 

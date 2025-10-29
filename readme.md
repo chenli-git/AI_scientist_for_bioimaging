@@ -7,6 +7,13 @@ It enables scientists to ask natural-language questions, analyze microscopy data
 ## 🧩 Overview
 
 This system is built around specialized AI “agents,” each designed for a specific research task:
+- AI_scientist_agent.py → text-based RAG
+
+- Image_analyst_agent.py → multimodal + RAG
+
+- Router → contextual routing + shared memory
+
+- GLOBAL_MEMORY → unified context
 
 | Agent | Primary Function |
 |--------|------------------|
@@ -38,9 +45,14 @@ The **ImageAnalyst Agent** bridges raw microscopy data and AI-assisted workflow 
 It reads uploaded images, extracts metadata and intensity statistics, and proposes step-by-step Fiji or Python analysis pipelines tailored to the data’s characteristics.
 
 ### **Key Features**
-- **Raw Image Understanding** - Accepts tiff, png, jpeg microscopy images.
+- **Raw Image Understanding** - Accepts microscopy images.
 - **Workflow Recommendation** - Suggests details Fiji or python pipeliness.
-- **RAG-based Fiji Knowledge** - Retrieves plugin documentation and tutorials from a continuously updated Fiji knowledge base.
+- **RAG-based Fiji Knowledge** - Retrieves plugin documentation and tutorials from a continuously updated Fiji and other open source packages knowledge base.
+1. Could accept two inputs, raw image, the user goal/question/description, optionally include summary
+2. vision-capable LLM
+3. searches both databases (tech docs and scientific papers)
+4. return: detailed fiji/python workflow, a rationale grounded in both the image and context.
+
 
 # System Architecture
 ```text
@@ -72,7 +84,7 @@ python -m data/document_loader # set the pdfs folder
 ```
 
 # Techs
-- OpenAI
+- OpenAI text and image 
 - Langchain
 - ChromaDB
 - Gradio

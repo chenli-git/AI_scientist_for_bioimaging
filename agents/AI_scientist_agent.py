@@ -9,6 +9,7 @@ from .base_agent import BaseAgent
 from config.prompts.scientist_prompt import SCIENTIST_PROMPT
 
 from core.debug_utils import debug_stage
+from core.memory_manager import GLOBAL_MEMORY
 
 class AIScientistAgent(BaseAgent):
     """
@@ -35,12 +36,6 @@ class AIScientistAgent(BaseAgent):
         self.session_store = {}
         self.debug = debug
         # 4️⃣ Build retrieval-augmented pipeline
-        # self.rag_chain = (
-        #     {"context": self.retriever | self._combine_docs, "question": RunnablePassthrough()}
-        #     | self.prompt
-        #     | self.llm
-        #     | StrOutputParser()
-        # )
         def maybe_debug(label):
             return debug_stage(label) if self.debug else RunnablePassthrough()
         
@@ -88,9 +83,10 @@ class AIScientistAgent(BaseAgent):
     def _get_session_history(self, session_id: str):
         """Retrieve or create a per-session message history."""
         #print("session id is ", session_id)
-        if session_id not in self.session_store:
-            self.session_store[session_id] = InMemoryChatMessageHistory()
-        return self.session_store[session_id]
+        # if session_id not in self.session_store:
+        #     self.session_store[session_id] = InMemoryChatMessageHistory()
+        # return self.session_store[session_id]
+        return GLOBAL_MEMORY.get_session(session_id)
     
     def run(self, query: str, session_id: str = "default") -> str:
         """Run RAG pipeline for a given query."""

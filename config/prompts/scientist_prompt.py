@@ -12,9 +12,3 @@ User Question:
 
 Answer clearly and concisely with reasoning grounded in the context.
 If the context does not contain enough information, say so explicitly."""
-
-
-
-
-
-

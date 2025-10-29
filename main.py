@@ -1,85 +1,86 @@
-# entry point, Gradio
 """
-Main entry point for the AI Scientist Agent project.
-Author: Chen Li
-Date: 2025
+main.py
+--------
+Entry point for the AI Scientist application.
+
+Supports two modes:
+1. CLI mode  → command-line interactive loop
+2. Gradio mode → web-based UI (default)
+
+Usage:
+    python main.py --mode cli
+    python main.py --mode gradio
+
+Requirements:
+    pip install gradio Pillow
 """
 
 import argparse
-import uuid
-from core.rag_pipeline import RAGPipeline
-from agents.AI_scientist_agent import AIScientistAgent
-from core.memory_manager import MemoryManager
-# from agents.PaperReviewerAgent import PaperReviewerAgent  # example future agent
+import sys
+from core.router import Router
 
-def run_cli(agent_cls, use_manager: bool = True):
-    """Run the AI Scientist in interactive CLI mode."""
-    rag = RAGPipeline(agent_cls=agent_cls)
-    memory_manager = MemoryManager()
-    session_id = "cli-session-" + uuid.uuid4().hex[:8]
-     # Simple local transcript for contextualization
-    conversation_log = []
-    print(f"🧠 {agent_cls.__name__} (session: {session_id})")
+# Lazy import of Gradio UI to avoid loading heavy modules when in CLI
+def run_gradio():
+    try:
+        # Adjust import path if app_gradio.py is in another directory
+        from ui.app_gradio import build_interface
+    except Exception as e:
+        print(f"❌ Failed to import Gradio app: {e}")
+        sys.exit(1)
+
+    demo = build_interface()
+    demo.queue(status_update_rate=0.1).launch(debug=True)
+
+
+def run_cli():
+    """
+    Simple command-line chat loop for testing routing logic.
+    """
+    router = Router()
+    print("🧠 AI Scientist CLI Mode")
     print("Type 'exit' to quit.\n")
 
     while True:
-        query = input(">>> ").strip()
-        if query.lower() in ["exit", "quit"]:
-            break
-        if not query:
-            break
         try:
-            history_text = "\n".join(
-                [f"User: {u}\nAI: {a}" for u, a in conversation_log]
+            query = input("💬 Enter your query: ").strip()
+            if query.lower() in ["exit", "quit"]:
+                break
+
+            img_path = input("🖼️ Optional image path (press Enter to skip): ").strip() or None
+
+            response, label = router.route_query(
+                query=query,
+                session_id="cli_session",
+                image_path=img_path,
             )
-            if use_manager and memory_manager:
-                contextualized_query = memory_manager.contextualize(query, history_text)
-            else:
-                contextualized_query = query
-            response = rag.agent.run(contextualized_query, session_id=session_id)
-            print(f"\n🧩 {response}\n")
-            conversation_log.append((query, response))
+            print(f"\n➡ Routed to [{label.upper()}]\n")
+            print(f"🧩 Response:\n{response}\n")
+
+        except KeyboardInterrupt:
+            print("\n👋 Exiting gracefully...")
+            break
         except Exception as e:
             print(f"⚠️ Error: {e}\n")
 
 
-
-# Import UI only when needed (so HPC jobs don’t require Gradio)
-def run_gradio(agent_cls):
-    from ui.app_gradio import build_interface
-    demo = build_interface(agent_cls=agent_cls)
-    demo.launch(debug=True)
-
 def main():
-    parser = argparse.ArgumentParser(description="AI Scientist Multi-Agent System")
+    parser = argparse.ArgumentParser(description="AI Scientist – Multi-Agent Assistant")
     parser.add_argument(
-        "-m", "--mode",
-        choices=["gradio", "cli"],
-        default="gradio",
-        help="Choose how to run the app: gradio (web UI) or cli (terminal)",
-    )
-
-    parser.add_argument(
-        "-a", "--agent",
+        "--mode",
+        "-m",
         type=str,
-        choices=["scientist"],  # Add 'reviewer', 'analyst', etc. later
-        default="scientist",
-        help="Select which agent to use"
+        choices=["cli", "gradio"],
+        default="gradio",
+        help="Choose how to run the app: cli or gradio",
     )
     args = parser.parse_args()
 
-    # Map CLI flag to class
-    agent_map = {
-        "scientist": AIScientistAgent,
-        # "reviewer": PaperReviewerAgent,
-    }
-    agent_cls = agent_map.get(args.agent)
+    if args.mode == "cli":
+        run_cli()
+    else:
+        run_gradio()
 
-
-    if args.mode == "gradio":
-        run_gradio(agent_cls)
-    elif args.mode == "cli":
-        run_cli(agent_cls)
 
 if __name__ == "__main__":
     main()
+    #python main.py -m cli
