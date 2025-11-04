@@ -20,8 +20,8 @@ This system is built around specialized AI “agents,” each designed for a spe
 | **AI Scientist Agent** | Literature-grounded scientific reasoning via RAG |
 | **ImageAnalyst Agent** | Workflow generation and interpretation of microscopy images |
 
-Each agent is implemented as a composable LangChain `Runnable` pipeline with its own memory, prompt templates, and retrieval logic.  
-The architecture is fully extensible — future agents (e.g., `PaperReviewerAgent`, `DataAnalystAgent`, or `ModelTrainerAgent`) can be added easily.
+Each agent is implemented as a composable LangChain `Runnable` pipeline with shared memory, individual prompt templates, and retrieval logic.  
+The architecture is fully extensible — future agents (e.g., `DataAnalystAgent`, or `ModelTrainerAgent`) can be added easily.
 
 ---
 
@@ -44,6 +44,7 @@ The main puprose is to provide Q&A of the local scientific papers and template f
 The **ImageAnalyst Agent** bridges raw microscopy data and AI-assisted workflow design.
 It reads uploaded images, extracts metadata and intensity statistics, and proposes step-by-step Fiji or Python analysis pipelines tailored to the data’s characteristics.
 
+
 ### **Key Features**
 - **Raw Image Understanding** - Accepts microscopy images.
 - **Workflow Recommendation** - Suggests details Fiji or python pipeliness.
@@ -52,6 +53,11 @@ It reads uploaded images, extracts metadata and intensity statistics, and propos
 2. vision-capable LLM
 3. searches both databases (tech docs and scientific papers)
 4. return: detailed fiji/python workflow, a rationale grounded in both the image and context.
+
+
+## PaperReviewer Agent
+### **Description**
+### **Key Features**
 
 
 # System Architecture

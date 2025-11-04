@@ -19,7 +19,7 @@ beautifulsoup4>=4.14.0
 playwright>=1.50.0
 tifffile>=2025.1.10
 scikit-image>=0.24.0
-
+docling>=2.50.0
 # === UI ===
 gradio>=4.44.0
 

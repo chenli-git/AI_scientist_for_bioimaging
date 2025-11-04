@@ -126,6 +126,7 @@ def build_chroma_db_from_fiji():
         print(f"• Found {len(sub_links)} sub-links under {root}")
 
     print(f"✅ Total pages to process: {len(all_links)}")
+    return
     # Load all pages as LangChain documents
     docs = load_webpages(sorted(all_links))
     if not docs:
@@ -189,9 +190,9 @@ def list_chroma_collections():
 # ---------------------------------------------------------------------
 def main():
     # Uncomment to rebuild the database
-    #build_chroma_db_from_fiji()
-    query_test()
-    list_chroma_collections()
+    build_chroma_db_from_fiji()
+    #query_test()
+    #list_chroma_collections()
     return
 
 if __name__ == "__main__":
