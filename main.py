@@ -47,11 +47,13 @@ def run_cli():
                 break
 
             img_path = input("🖼️ Optional image path (press Enter to skip): ").strip() or None
+            pdf_path = input("📄 Optional PDF path (press Enter to skip): ").strip() or None
 
             response, label = router.route_query(
                 query=query,
                 session_id="cli_session",
                 image_path=img_path,
+                pdf_path=pdf_path,
             )
             print(f"\n➡ Routed to [{label.upper()}]\n")
             print(f"🧩 Response:\n{response}\n")

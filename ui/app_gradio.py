@@ -214,7 +214,9 @@ def build_interface() -> gr.Blocks:
                 outputs=[chatbot],
             ) \
             .then(hide_waiting, outputs=[wait_label])\
-            .then(lambda: "", None, txt)
+            .then(lambda: "", None, txt) \
+            .then(lambda: None, None, image) \
+            .then(lambda: None, None, pdf_file)
 
         # Hitting Enter (submit) behaves the same way
         txt.submit(show_waiting, outputs=[wait_label]) \
@@ -224,7 +226,9 @@ def build_interface() -> gr.Blocks:
                 outputs=[chatbot],
             ) \
             .then(hide_waiting, outputs=[wait_label]) \
-            .then(lambda: "", None, txt)
+            .then(lambda: "", None, txt) \
+            .then(lambda: None, None, image) \
+            .then(lambda: None, None, pdf_file)
 
         # After send, clear the textbox only (keep uploads so users can iterate)
         #send.click(lambda: "", None, txt)

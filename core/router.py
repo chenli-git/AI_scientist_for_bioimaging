@@ -3,9 +3,15 @@ core/router.py
 ---------------
 Hybrid router for multi-agent orchestration.
 Decides which agent should handle a query based on:
-- Presence of an image (→ ImageAnalystAgent)
-- Domain keywords
+- Query intent keywords (takes priority)
+- Uploaded files (images → ImageAnalystAgent, PDFs → PaperReviewerAgent)
 - Optional LLM-based classification
+- Default fallback to AIScientistAgent
+
+Routes to:
+- PaperReviewerAgent: paper review, critique, literature analysis
+- ImageAnalystAgent: image analysis, segmentation workflows
+- AIScientistAgent: general scientific Q&A, microscopy concepts
 """
 
 from typing import Dict, Optional
@@ -14,6 +20,7 @@ import re
 # import available agents
 from agents.AI_scientist_agent import AIScientistAgent
 from agents.Image_analyst_agent import ImageAnalystAgent
+from agents.paper_reviewer_agent import PaperReviewerAgent
 from config.prompts.router_prompt import ROUTER_PROMPT
 from core.memory_manager import GLOBAL_MEMORY
 
@@ -30,21 +37,25 @@ class Router:
         self.agent_map = agent_map or {
         "scientist": AIScientistAgent,
         "analyst": ImageAnalystAgent,
+        "reviewer": PaperReviewerAgent,
         }
         self.use_llm = use_llm
         self._instances = {}  # cache of active agents
         self.llm = get_llm(temperature=0.0)
     
-    def _rule_based_route(self, query: str, image_path: Optional[str] = None) -> str:
+    def _rule_based_route(self, query: str, image_path: Optional[str] = None, pdf_path: Optional[str] = None) -> str:
         q = query.lower().strip()
 
-        # Always route to image analyst if image file provided
-        if image_path:
-            return "analyst"
-        if any(k in q for k in ["segmentation", "threshold", "watershed", "pixel", "mask", "analyze data", "radiomics"]):
-            return "analyst"
-        elif any(k in q for k in ["paper", "review", "citation", "summarize", "literature", "criticize"]):
+        # Priority 1: Check query intent first (keywords take precedence)
+        # Paper review keywords → reviewer
+        if any(k in q for k in ["paper", "review", "citation", "summarize", "literature", "criticize", "critique", "methodology"]):
             return "reviewer"
+        
+        # Image analysis keywords or image provided → analyst
+        if image_path or any(k in q for k in ["segmentation", "threshold", "watershed", "pixel", "mask", "analyze image", "analyze data", "radiomics"]):
+            return "analyst"
+        
+        # Scientific questions → scientist
         elif any(k in q for k in ["microscopy", "imaging", "neuron", "astrocyte", "adaptive optics", "optics"]):
             return "scientist"
         else:
@@ -52,19 +63,18 @@ class Router:
             return "scientist"
         
 
-    def _llm_based_route(self, query: str, image_path: Optional[str] = None) -> str:
+    def _llm_based_route(self, query: str, image_path: Optional[str] = None, pdf_path: Optional[str] = None) -> str:
         """Ask an LLM to classify which agent should handle the task."""
-        if image_path:
-            return "analyst"  # vision queries don't need LLM classification
+        # Let the LLM decide based on query intent, even if files are uploaded
         routing_prompt = ROUTER_PROMPT.format(query=query)
         try:
             response = self.llm.invoke(routing_prompt)
             label = response.content.strip().lower()
             if label not in self.agent_map:
-                label = self._rule_based_route(query)
+                label = self._rule_based_route(query, image_path, pdf_path)
             return label
         except Exception:
-            return self._rule_based_route(query)
+            return self._rule_based_route(query, image_path, pdf_path)
     
     # ------------------------------------------------------------------
     # Shared logic for getting or creating an agent
@@ -77,7 +87,7 @@ class Router:
     # ------------------------------------------------------------------
     # Main dispatch
     # ------------------------------------------------------------------
-    def route_query(self, query: str, session_id: str = "default", image_path: Optional[str] = None, use_llm: Optional[bool] = None):
+    def route_query(self, query: str, session_id: str = "default", image_path: Optional[str] = None, pdf_path: Optional[str] = None, use_llm: Optional[bool] = None):
         """
         Handle query routing:
         1. Contextualize query using conversation history
@@ -91,8 +101,8 @@ class Router:
         #print(f"Rewritten Query:\n{rewritten_query}\n")
 
         # Step 2. Choose agent
-        #label = self._llm_based_route(rewritten_query, image_path) if use_llm else self._rule_based_route(rewritten_query, image_path)
-        label = self._llm_based_route(query, image_path) if use_llm else self._rule_based_route(query, image_path)
+        #label = self._llm_based_route(rewritten_query, image_path, pdf_path) if use_llm else self._rule_based_route(rewritten_query, image_path, pdf_path)
+        label = self._llm_based_route(query, image_path, pdf_path) if use_llm else self._rule_based_route(query, image_path, pdf_path)
 
         agent = self._get_agent_instance(label)
 
@@ -102,6 +112,8 @@ class Router:
         # Step 4. Execute agent
         if label == "analyst" and image_path:
             response = agent.run(user_goal=query, image_path=image_path, session_id=session_id)
+        elif label == "reviewer" and pdf_path:
+            response = agent.run(query=query, pdf_path=pdf_path, session_id=session_id)
         else:
             response = agent.run(query, session_id=session_id)
 
@@ -118,11 +130,13 @@ if __name__ == "__main__":
         if q.lower() in ["exit", "quit"]:
             break
         img = input("🖼️ Image path (optional): ").strip() or None
+        pdf = input("📄 PDF path (optional): ").strip() or None
 
         try:
             response, label = router.route_query(
                 query=q,
                 image_path=img,
+                pdf_path=pdf,
             )
             print(f"\n➡ Routed to [{label.upper()}]\n")
             print(f"💬 Response:\n{response}\n")

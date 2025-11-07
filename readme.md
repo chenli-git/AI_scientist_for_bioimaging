@@ -6,19 +6,18 @@ It enables scientists to ask natural-language questions, analyze microscopy data
 
 ## 🧩 Overview
 
-This system is built around specialized AI “agents,” each designed for a specific research task:
-- AI_scientist_agent.py → text-based RAG
-
-- Image_analyst_agent.py → multimodal + RAG
-
-- Router → contextual routing + shared memory
-
-- GLOBAL_MEMORY → unified context
+This system is built around specialized AI "agents," each designed for a specific research task:
+- **AI_scientist_agent.py** → text-based RAG for scientific Q&A
+- **Image_analyst_agent.py** → multimodal vision + RAG for workflow design
+- **paper_reviewer_agent.py** → PDF analysis + RAG for paper review
+- **Router** → intelligent routing based on query intent + shared memory
+- **GLOBAL_MEMORY** → unified conversation context across agents
 
 | Agent | Primary Function |
 |--------|------------------|
 | **AI Scientist Agent** | Literature-grounded scientific reasoning via RAG |
 | **ImageAnalyst Agent** | Workflow generation and interpretation of microscopy images |
+| **PaperReviewer Agent** | Scientific paper analysis, critique, and literature review with PDF support |
 
 Each agent is implemented as a composable LangChain `Runnable` pipeline with shared memory, individual prompt templates, and retrieval logic.  
 The architecture is fully extensible — future agents (e.g., `DataAnalystAgent`, or `ModelTrainerAgent`) can be added easily.
@@ -57,7 +56,16 @@ It reads uploaded images, extracts metadata and intensity statistics, and propos
 
 ## PaperReviewer Agent
 ### **Description**
+The **PaperReviewer Agent** specializes in scientific paper analysis, critique, and literature review for bioimaging research.  
+It can read and analyze uploaded PDF papers, extracting text, tables, and figures, then provide comprehensive reviews grounded in both the paper content and relevant literature from the knowledge base.
+
 ### **Key Features**
+- **PDF Content Extraction** – Automatically parses uploaded papers to extract full text, tables, and figure captions using Docling.
+- **Literature-Grounded Reviews** – Combines uploaded paper content with RAG retrieval from the scientific literature database.
+- **Critical Analysis** – Evaluates methodology, experimental design, novelty, and scientific rigor.
+- **Constructive Feedback** – Provides evidence-based suggestions for improvement.
+- **Session Memory** – Remembers uploaded papers for follow-up questions in the same session.
+- **Flexible Queries** – Works with or without PDF uploads for literature reviews and paper summaries.
 
 
 # System Architecture
