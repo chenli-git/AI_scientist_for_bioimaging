@@ -17,12 +17,14 @@ Routes to:
 from typing import Dict, Optional
 from core.llm_client import get_llm
 import re
+import time
 # import available agents
 from agents.AI_scientist_agent import AIScientistAgent
 from agents.Image_analyst_agent import ImageAnalystAgent
 from agents.paper_reviewer_agent import PaperReviewerAgent
 from config.prompts.router_prompt import ROUTER_PROMPT
 from core.memory_manager import GLOBAL_MEMORY
+from core.analytics import ANALYTICS
 
 class Router:
     """
@@ -93,8 +95,10 @@ class Router:
         1. Contextualize query using conversation history
         2. Select appropriate agent
         3. Run the query and store memory
+        4. Log analytics for research metrics
         """
         use_llm = self.use_llm if use_llm is None else use_llm
+        start_time = time.time()
 
         # Step 1. Contextualize the query using shared memory
         #rewritten_query = GLOBAL_MEMORY.contextualize(query, session_id)
@@ -119,6 +123,17 @@ class Router:
 
         # Step 5. Store AI response
         GLOBAL_MEMORY.add_ai_message(session_id, response)
+
+        # Step 6. Log analytics
+        response_time = time.time() - start_time
+        ANALYTICS.log_query(
+            query=query,
+            agent_used=label,
+            session_id=session_id,
+            response_time=response_time,
+            has_image=bool(image_path),
+            has_pdf=bool(pdf_path)
+        )
 
         return response, label
 
