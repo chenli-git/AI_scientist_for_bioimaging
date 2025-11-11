@@ -5,6 +5,7 @@ Scrapes official Fiji tutorials and documentation into a local vector DB.
 """
 
 import os
+from typing import List
 import requests
 from tqdm import tqdm
 from bs4 import BeautifulSoup
@@ -109,7 +110,110 @@ def load_webpages(urls):
     return docs
 
 # ---------------------------------------------------------------------
-# Build Chroma DB
+# Build Chroma DB - Generic Function for Any URLs
+# ---------------------------------------------------------------------
+def scrape_and_build_db(
+    root_urls: List[str],
+    collection_name: str = "online_tech_docs",
+    max_links_per_root: int = 300,
+    chunk_size: int = 1000,
+    chunk_overlap: int = 200,
+    verbose: bool = True
+):
+    """
+    Scrape web documentation from URLs and build a Chroma database.
+    
+    Parameters
+    ----------
+    root_urls : list of str
+        List of URLs to scrape
+    collection_name : str
+        Name for the Chroma collection
+    max_links_per_root : int
+        Maximum number of links to crawl per root URL
+    chunk_size : int
+        Text chunk size for embeddings
+    chunk_overlap : int
+        Overlap between chunks
+    verbose : bool
+        Print progress information
+    """
+    if verbose:
+        print(f"🔍 Starting documentation crawl for {len(root_urls)} root URL(s)...")
+    
+    all_links = set(root_urls)
+    
+    # Crawl sub-links from each root
+    for root in root_urls:
+        try:
+            if "imagej" in root:
+                sub_links = crawl_fiji_links(root)
+            else:
+                sub_links = crawl_dynamic_links(root)
+            
+            # Limit number of links
+            sub_links = list(sub_links)[:max_links_per_root]
+            all_links.update(sub_links)
+            
+            if verbose:
+                print(f"• Found {len(sub_links)} sub-links under {root}")
+        except Exception as e:
+            if verbose:
+                print(f"⚠️  Error crawling {root}: {e}")
+    
+    if verbose:
+        print(f"✅ Total pages to process: {len(all_links)}")
+    
+    # Load all pages
+    docs = load_webpages(sorted(all_links))
+    if not docs:
+        raise ValueError("❌ No documentation pages loaded!")
+    
+    # Split into chunks
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=chunk_size,
+        chunk_overlap=chunk_overlap
+    )
+    split_docs = splitter.split_documents(docs)
+    
+    if verbose:
+        print(f"✂️  Split into {len(split_docs)} text chunks.")
+    
+    # Clean text
+    cleaned_docs = []
+    iterator = tqdm(split_docs, desc="🧹 Cleaning text") if verbose else split_docs
+    for d in iterator:
+        try:
+            d.page_content = clean_text(d.page_content)
+            cleaned_docs.append(d)
+        except Exception as e:
+            if verbose:
+                print(f"⚠️  Skipped chunk: {e}")
+    
+    if verbose:
+        print(f"✅ Cleaned {len(cleaned_docs)} chunks successfully.")
+    
+    # Build embeddings and store
+    if verbose:
+        print("🔢 Generating embeddings and saving to Chroma...")
+    
+    embeddings = get_embeddings()
+    vectordb = Chroma.from_documents(
+        cleaned_docs,
+        embeddings,
+        persist_directory=CHROMA_DIR,
+        collection_name=collection_name,
+    )
+    vectordb.persist()
+    
+    if verbose:
+        print(f"💾 Knowledge base saved to: {CHROMA_DIR}")
+    
+    return vectordb
+
+
+# ---------------------------------------------------------------------
+# Build Chroma DB - Fiji Specific (Legacy)
 # ---------------------------------------------------------------------
 def build_chroma_db_from_fiji():
     """Scrape official Fiji docs and store embeddings in Chroma."""
@@ -126,7 +230,6 @@ def build_chroma_db_from_fiji():
         print(f"• Found {len(sub_links)} sub-links under {root}")
 
     print(f"✅ Total pages to process: {len(all_links)}")
-    return
     # Load all pages as LangChain documents
     docs = load_webpages(sorted(all_links))
     if not docs:

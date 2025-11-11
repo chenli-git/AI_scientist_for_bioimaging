@@ -42,6 +42,88 @@ The **AI Scientist** project is a multi-agent framework that unifies **retrieval
 
 ---
 
+## 📦 Installation & Quick Start
+
+### Install via pip
+```bash
+pip install aibioagent
+```
+
+### Quick Start (3 lines)
+```python
+import aibioagent as aba
+
+aba.quickstart(api_key="sk-your-key")  # Setup
+response = aba.ask("What is adaptive optics?")  # Ask anything
+print(response)
+```
+
+### Full Setup
+```python
+import aibioagent as aba
+
+# 1. Set API key
+aba.set_api_key("sk-your-openai-key")
+
+# 2. Add your research papers (single file or folder)
+aba.add_papers("paper.pdf", collection="my_paper")  # Single file
+aba.add_papers("papers/microscopy", collection="microscopy_papers")  # Folder
+
+# 3. Add code documentation (URLs)
+# Default URLs for ImageJ, scikit-image, OpenCV, Pillow are included
+# Add more if needed:
+aba.add_urls(["https://napari.org/"], collection="napari_docs")
+
+# 4. Ask questions
+response = aba.ask("What segmentation methods are best for cells?")
+
+# 5. Analyze images
+response = aba.ask(
+    "Suggest a workflow for this image",
+    image_path="microscopy.tif"
+)
+
+# 6. Review papers
+response = aba.ask(
+    "Summarize the methodology",
+    pdf_path="research_paper.pdf"
+)
+```
+
+### Two Types of Knowledge Bases
+
+The agents automatically search **ALL collections** you create, so you don't need to specify which database to query.
+
+**📄 Papers Database** (Research Literature)
+- Built from PDF research papers
+- Use `add_papers()` with your PDF files/folders
+- Default collection: `"papers"`
+- Example: `aba.add_papers("papers/", collection="microscopy_papers")`
+
+**💻 Code Documentation Database** (Technical Docs)
+- Built from web documentation URLs
+- Use `add_urls()` to add online docs
+- Default collection: `"code_docs"`
+- Default URLs included: ImageJ, scikit-image, OpenCV, Pillow, LangChain
+- Example: `aba.add_urls(["https://napari.org/"], collection="napari_docs")`
+- See defaults: `aba.get_default_urls()`
+
+**How It Works:**
+```python
+# Build multiple collections
+aba.add_papers("papers/microscopy", collection="microscopy_papers")
+aba.add_papers("papers/crispr", collection="crispr_papers")
+aba.add_urls(["https://napari.org/"], collection="napari_docs")
+
+# Query - automatically searches ALL collections!
+response = aba.ask("What are watershed segmentation methods?")
+# The agent searches microscopy_papers, crispr_papers, AND napari_docs
+```
+
+**See [USER_GUIDE.md](USER_GUIDE.md) for complete API documentation**
+
+---
+
 ## 🧩 Architecture Overview
 
 This system is built around specialized AI "agents," each designed for a specific research task:
@@ -59,6 +141,34 @@ This system is built around specialized AI "agents," each designed for a specifi
 
 Each agent is implemented as a composable LangChain `Runnable` pipeline with shared memory, individual prompt templates, and retrieval logic.  
 The architecture is fully extensible — future agents (e.g., `DataAnalystAgent`, or `ModelTrainerAgent`) can be added easily.
+
+---
+
+## 📚 User API Functions
+
+### Configuration
+- `set_api_key(key)` - Set OpenAI API key
+- `get_api_key()` - Get current API key
+- `info()` - Show package configuration
+
+### Knowledge Base Management
+- `add_papers(folder, collection)` - Add PDF papers to database
+- `add_urls(urls, collection)` - Scrape web documentation
+- `list_collections()` - Show all databases
+- `search_collection(query, collection)` - Search specific database
+- `delete_collection(name, confirm=True)` - Remove database
+
+### Query & Chat
+- `ask(question, image_path, pdf_path)` - Ask the AI agent
+- `chat(mode="cli"|"gradio")` - Start interactive session
+
+### Advanced
+- `get_scientist_agent()` - Direct agent access
+- `get_image_analyst()` - Direct agent access
+- `get_paper_reviewer()` - Direct agent access
+- `get_router()` - Direct router access
+
+**Full API: [USER_GUIDE.md](USER_GUIDE.md)**
 
 ---
 
@@ -198,6 +308,13 @@ pip install -r requirements.txt
 Create a `.env` file in the project root:
 ```bash
 OPENAI_API_KEY=your_api_key_here
+```
+
+**Need an API key?** See [API_KEY_SETUP.md](API_KEY_SETUP.md) for detailed instructions.
+
+**Just want to run tests?** No API key needed - tests use mocks:
+```bash
+pytest  # Works without API key!
 ```
 
 ### 3️⃣ Build Your Knowledge Base

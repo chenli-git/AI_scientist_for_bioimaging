@@ -3,7 +3,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough, RunnableWithMessageHistory
 from langchain_core.chat_history import InMemoryChatMessageHistory
 
-from core.embeddings import get_vectorstore
+from core.smart_retriever import get_smart_retriever
 from core.llm_client import get_llm
 from .base_agent import BaseAgent
 from config.prompts.scientist_prompt import SCIENTIST_PROMPT
@@ -18,6 +18,8 @@ class AIScientistAgent(BaseAgent):
     This agent performs retrieval-augmented generation (RAG)
     for scientific reasoning and literature question answering.
 
+    Now uses SmartRetriever to automatically search ALL user collections.
+
     Responsibilities:
     - Defines its own prompt
     - Initializes RAG pipeline (retriever + LLM)
@@ -25,9 +27,10 @@ class AIScientistAgent(BaseAgent):
     """
     def __init__(self, temperature: float = 0.2, debug: bool = False):
         super().__init__()
-        # 1️⃣ Load vectorstore for retrieval
-        self.vectorstore = get_vectorstore("bioimage_segmentation")
-        self.retriever = self.vectorstore.as_retriever(search_kwargs={"k": 3})
+        # 1️⃣ Use SmartRetriever to search ALL collections
+        self.smart_retriever = get_smart_retriever()
+        # Get retriever function that searches all collections
+        self.retriever = self.smart_retriever.get_retriever("all", k=3)
         # 2️⃣ Load LLM client
         self.llm = get_llm(temperature=temperature)
         # 3️⃣ Load predefined prompt from config/prompts

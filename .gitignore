@@ -1,7 +1,41 @@
+# Data directories
 data/papers
 data/chroma_db
 data/pdf_samples
+data/usage_analytics.json
+data/*_analytics.json
 test_images
 .gradio_uploads
+
+# Environment and secrets
 .env
+*.env
+.env.*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
 

@@ -3,6 +3,8 @@ agents/image_analyst_agent.py
 -----------------------------
 Multimodal ImageAnalystAgent that reads microscopy images and
 designs a workflow based on both user goals and literature context.
+
+Now uses SmartRetriever to automatically search ALL user collections.
 """
 
 import numpy as np
@@ -12,7 +14,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough, RunnableWithMessageHistory
 from langchain_core.chat_history import InMemoryChatMessageHistory
-from core.embeddings import get_vectorstore
+from core.smart_retriever import get_smart_retriever
 from core.llm_client import get_llm, get_vision_llm  # <-- use vision-capable LLM here
 from config.settings import CHROMA_DIR
 from .base_agent import BaseAgent
@@ -26,11 +28,12 @@ class ImageAnalystAgent(BaseAgent):
         super().__init__()
         self.text_llm = get_llm(temperature=temperature)
         self.vision_llm, self.call_with_image = get_vision_llm(temperature=temperature)
-        # Connect to both vectorstores
-        self.bio_db = get_vectorstore("bioimage_segmentation")
-        self.tech_db = get_vectorstore("online_tech_docs")
-        self.bio_retriever = self.bio_db.as_retriever(search_kwargs={"k": 3})
-        self.fiji_retriever = self.tech_db.as_retriever(search_kwargs={"k": 3})
+        
+        # Use SmartRetriever to search ALL collections
+        self.smart_retriever = get_smart_retriever()
+        # Get retriever functions for papers and code docs
+        self.bio_retriever = self.smart_retriever.get_retriever("papers", k=3)
+        self.fiji_retriever = self.smart_retriever.get_retriever("code", k=3)
 
         # Define multimodal prompt
         self.prompt = ChatPromptTemplate.from_template(IMANALYST_PROMPT)
@@ -60,9 +63,10 @@ class ImageAnalystAgent(BaseAgent):
         )
 
     def _retrieve_context(self, query: str):
-        """Retrieve relevant text context from scientific and Fiji databases."""
-        sci_docs = self.bio_retriever.invoke(query)
-        fiji_docs = self.fiji_retriever.invoke(query)
+        """Retrieve relevant text context from scientific and code documentation."""
+        # SmartRetriever returns list of documents
+        sci_docs = self.bio_retriever(query)
+        fiji_docs = self.fiji_retriever(query)
 
         sci_context = "\n\n".join([d.page_content for d in sci_docs])
         fiji_context = "\n\n".join([d.page_content for d in fiji_docs])

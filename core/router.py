@@ -54,7 +54,7 @@ class Router:
             return "reviewer"
         
         # Image analysis keywords or image provided → analyst
-        if image_path or any(k in q for k in ["segmentation", "threshold", "watershed", "pixel", "mask", "analyze image", "analyze data", "radiomics"]):
+        if image_path or any(k in q for k in ["segmentation", "segment", "detection", "threshold", "watershed", "pixel", "mask", "analyze image", "analyze data", "radiomics"]):
             return "analyst"
         
         # Scientific questions → scientist

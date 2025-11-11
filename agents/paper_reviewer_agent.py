@@ -4,7 +4,7 @@ from langchain_core.runnables import RunnablePassthrough, RunnableWithMessageHis
 from langchain_core.chat_history import InMemoryChatMessageHistory
 from typing import Optional
 
-from core.embeddings import get_vectorstore
+from core.smart_retriever import get_smart_retriever
 from core.llm_client import get_llm
 from .base_agent import BaseAgent
 from config.prompts.reviewer_prompt import REVIEWER_PROMPT
@@ -31,9 +31,9 @@ class PaperReviewerAgent(BaseAgent):
     def __init__(self, temperature: float = 0.3, debug: bool = False):
         super().__init__()
         
-        # 1️⃣ Load vectorstore for retrieval
-        self.vectorstore = get_vectorstore("bioimage_segmentation")
-        self.retriever = self.vectorstore.as_retriever(search_kwargs={"k": 5})  # More context for reviews
+        # 1️⃣ Load SmartRetriever for automatic multi-collection search
+        self.smart_retriever = get_smart_retriever()
+        self.retriever = self.smart_retriever.get_retriever("papers", k=5)  # More context for reviews
         
         # 2️⃣ Load LLM client with slightly higher temperature for nuanced analysis
         self.llm = get_llm(temperature=temperature)
