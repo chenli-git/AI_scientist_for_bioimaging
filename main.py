@@ -86,3 +86,8 @@ def main():
 if __name__ == "__main__":
     main()
     #python main.py -m cli
+
+    # pip install --upgrade build twine # install build tolls
+    # rm -rf build dist *.egg-info #remove old build
+    # python -m build
+    #  

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aibioagent"
-version = "0.2.1"
+version = "0.2.2"
 description = "A multi-agent AI system for biomedical imaging research with RAG, image analysis, and paper review"
 readme = "readme.md"
 requires-python = ">=3.10"

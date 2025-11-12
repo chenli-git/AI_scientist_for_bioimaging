@@ -39,3 +39,12 @@ htmlcov/
 .DS_Store
 Thumbs.db
 
+# Document
+PYPI*.md
+PUB*.md
+PRE*.md
+PRE*.md
+PACK*.md
+
+
+

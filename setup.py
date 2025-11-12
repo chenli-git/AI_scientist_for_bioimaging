@@ -10,7 +10,7 @@ long_description = (this_directory / "readme.md").read_text(encoding="utf-8")
 
 setup(
     name="aibioagent",
-    version="0.1.0",
+    version="0.2.2",
     author="Chen Li",
     author_email="chenli970701@gmail.com",  
     description="A multi-agent AI system for biomedical imaging research with RAG, image analysis, and paper review",
