@@ -39,10 +39,9 @@ htmlcov/
 .DS_Store
 Thumbs.db
 
-# Document
+# Documentation (local only)
 PYPI*.md
 PUB*.md
-PRE*.md
 PRE*.md
 PACK*.md
 
