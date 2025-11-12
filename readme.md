@@ -15,6 +15,7 @@ The **AI Scientist** project is a multi-agent framework that unifies **retrieval
 - 🧠 **Conversational Memory** - Agents remember context across questions
 - 📚 **RAG-Powered** - Answers grounded in your scientific literature database
 - 🎯 **Smart Routing** - Automatically picks the right agent for your task
+- ⚙️ **Configurable Models** - Choose your LLM, vision, and embedding models
 
 ---
 
@@ -65,30 +66,78 @@ import aibioagent as aba
 # 1. Set API key
 aba.set_api_key("sk-your-openai-key")
 
-# 2. Add your research papers (single file or folder)
+# 2. (Optional) Configure models for better quality
+aba.set_llm_model("gpt-4o")              # Text generation (default: gpt-4o-mini)
+aba.set_vision_model("gpt-4o")           # Image analysis (default: gpt-4o-mini)
+aba.set_embed_model("text-embedding-3-large")  # Embeddings (default: text-embedding-3-small)
+
+# 3. Add your research papers (single file or folder)
 aba.add_papers("paper.pdf", collection="my_paper")  # Single file
 aba.add_papers("papers/microscopy", collection="microscopy_papers")  # Folder
 
-# 3. Add code documentation (URLs)
+# 4. Add code documentation (URLs)
 # Default URLs for ImageJ, scikit-image, OpenCV, Pillow are included
 # Add more if needed:
 aba.add_urls(["https://napari.org/"], collection="napari_docs")
 
-# 4. Ask questions
+# 5. Ask questions
 response = aba.ask("What segmentation methods are best for cells?")
 
-# 5. Analyze images
+# 6. Analyze images
 response = aba.ask(
     "Suggest a workflow for this image",
     image_path="microscopy.tif"
 )
 
-# 6. Review papers
+# 7. Review papers
 response = aba.ask(
     "Summarize the methodology",
     pdf_path="research_paper.pdf"
 )
+
+# 8. Check configuration
+aba.info()  # Shows current models, database path, etc.
 ```
+
+### ⚙️ Model Configuration
+
+You can customize which OpenAI models to use for different tasks:
+
+**Available Models:**
+```python
+# LLM Models (text generation)
+aba.set_llm_model("gpt-4o")         # Most capable, expensive
+aba.set_llm_model("gpt-4o-mini")    # Balanced (default)
+aba.set_llm_model("gpt-3.5-turbo")  # Fastest, cheapest
+
+# Vision Models (image analysis)
+aba.set_vision_model("gpt-4o")      # Best vision understanding
+aba.set_vision_model("gpt-4o-mini") # Good balance (default)
+
+# Embedding Models (vector database)
+aba.set_embed_model("text-embedding-3-large")  # 3072 dim, best quality
+aba.set_embed_model("text-embedding-3-small")  # 1536 dim, balanced (default)
+aba.set_embed_model("text-embedding-ada-002")  # 1536 dim, legacy
+
+# Check current configuration
+models = aba.get_models()
+print(models)  # {'llm': 'gpt-4o-mini', 'vision': 'gpt-4o-mini', 'embed': 'text-embedding-3-small'}
+```
+
+**⚠️ Important:** If you change the embedding model, you must rebuild all vector databases:
+```python
+aba.set_embed_model("text-embedding-3-large")
+
+# Delete old collections first (incompatible embeddings)
+aba.delete_collection("my_papers", confirm=False)
+aba.delete_collection("my_docs", confirm=False)
+
+# Now rebuild with new embedding model:
+aba.add_papers("papers/", collection="my_papers")  # Create fresh
+aba.add_urls(urls, collection="my_docs")           # Create fresh
+```
+
+**Note:** `add_papers()` and `add_urls()` **append** to existing collections. If you want to replace a collection, delete it first using `delete_collection()`.
 
 ### Two Types of Knowledge Bases
 
@@ -149,11 +198,16 @@ The architecture is fully extensible — future agents (e.g., `DataAnalystAgent`
 ### Configuration
 - `set_api_key(key)` - Set OpenAI API key
 - `get_api_key()` - Get current API key
-- `info()` - Show package configuration
+- `set_llm_model(name)` - Set text generation model (e.g., "gpt-4o")
+- `set_vision_model(name)` - Set image analysis model (e.g., "gpt-4o-mini")
+- `set_embed_model(name)` - Set embedding model (e.g., "text-embedding-3-large")
+- `get_models()` - Get current model configuration
+- `info()` - Show package configuration (includes all models)
 
 ### Knowledge Base Management
 - `add_papers(folder, collection)` - Add PDF papers to database
 - `add_urls(urls, collection)` - Scrape web documentation
+- `get_default_urls()` - Show included documentation URLs
 - `list_collections()` - Show all databases
 - `search_collection(query, collection)` - Search specific database
 - `delete_collection(name, confirm=True)` - Remove database

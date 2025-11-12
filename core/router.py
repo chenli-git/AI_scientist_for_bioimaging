@@ -43,7 +43,7 @@ class Router:
         }
         self.use_llm = use_llm
         self._instances = {}  # cache of active agents
-        self.llm = get_llm(temperature=0.0)
+        self.llm = get_llm(temperature=0.3)
     
     def _rule_based_route(self, query: str, image_path: Optional[str] = None, pdf_path: Optional[str] = None) -> str:
         q = query.lower().strip()

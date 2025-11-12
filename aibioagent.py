@@ -280,6 +280,16 @@ def add_papers(
     - Use descriptive collection names to organize your literature
     - Papers are for scientific literature, NOT for code documentation
     - For code/API documentation, use add_urls() instead
+    - **Important**: This function APPENDS to existing collections
+    - To replace a collection, delete it first: delete_collection(name)
+    
+    Examples of updating vs replacing:
+    >>> # Append new papers to existing collection
+    >>> aba.add_papers("new_papers/", collection="my_papers")  # Adds to existing
+    >>> 
+    >>> # Replace entire collection
+    >>> aba.delete_collection("my_papers", confirm=False)  # Delete old
+    >>> aba.add_papers("papers/", collection="my_papers")  # Create fresh
     """
     from data.document_loader import load_pdfs_from_folder, clean_text
     from langchain_community.document_loaders import PyPDFLoader
@@ -451,6 +461,16 @@ def add_urls(
     - For research papers (PDFs), use add_papers() instead
     - Default imaging library docs are already included in code
     - Use descriptive collection names to organize different tools
+    - **Important**: This function APPENDS to existing collections
+    - To replace a collection, delete it first: delete_collection(name)
+    
+    Examples of updating vs replacing:
+    >>> # Append new URLs to existing collection
+    >>> aba.add_urls(["https://new-docs.com"], collection="my_docs")  # Adds to existing
+    >>> 
+    >>> # Replace entire collection
+    >>> aba.delete_collection("my_docs", confirm=False)  # Delete old
+    >>> aba.add_urls(urls, collection="my_docs")  # Create fresh
     """
     from data.fiji_scraper import scrape_and_build_db
     
