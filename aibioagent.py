@@ -99,8 +99,9 @@ def get_api_key() -> Optional[str]:
     >>> key = aba.get_api_key()
     >>> print(f"Key: {key[:10]}...")  # Show first 10 chars
     """
-    from config.settings import OPENAI_API_KEY
-    return OPENAI_API_KEY
+    import os
+    # Always read from current environment (includes .env loaded values)
+    return os.getenv("OPENAI_API_KEY")
 
 
 # ============================================================================
@@ -589,17 +590,63 @@ def chat(mode: str = "cli") -> None:
     >>> # Web UI chat
     >>> aba.chat(mode="gradio")
     """
-    from main import main
+    if mode == "cli":
+        _run_cli()
+    elif mode == "gradio":
+        _run_gradio()
+    else:
+        raise ValueError(f"Invalid mode: {mode}. Choose 'cli' or 'gradio'.")
+
+
+def _run_cli():
+    """
+    Simple command-line chat loop for testing routing logic.
+    """
+    from core.router import Router
+    
+    router = Router()
+    print("🧠 AI Scientist CLI Mode")
+    print("Type 'exit' to quit.\n")
+
+    while True:
+        try:
+            query = input("💬 Enter your query: ").strip()
+            if query.lower() in ["exit", "quit"]:
+                break
+
+            img_path = input("🖼️ Optional image path (press Enter to skip): ").strip() or None
+            pdf_path = input("📄 Optional PDF path (press Enter to skip): ").strip() or None
+
+            response, label = router.route_query(
+                query=query,
+                session_id="cli_session",
+                image_path=img_path,
+                pdf_path=pdf_path,
+            )
+            print(f"\n➡ Routed to [{label.upper()}]\n")
+            print(f"🧩 Response:\n{response}\n")
+
+        except KeyboardInterrupt:
+            print("\n👋 Exiting gracefully...")
+            break
+        except Exception as e:
+            print(f"⚠️ Error: {e}\n")
+
+
+def _run_gradio():
+    """
+    Launch the Gradio web interface.
+    """
     import sys
-    
-    # Temporarily modify sys.argv to pass mode
-    original_argv = sys.argv.copy()
-    sys.argv = ["aibioagent", "--mode", mode]
-    
     try:
-        main()
-    finally:
-        sys.argv = original_argv
+        from ui.app_gradio import build_interface
+    except ImportError as e:
+        print(f"❌ Failed to import Gradio app: {e}")
+        print("💡 Make sure gradio and Pillow are installed: pip install gradio Pillow")
+        sys.exit(1)
+
+    demo = build_interface()
+    demo.queue(status_update_rate=0.1).launch(debug=True)
 
 
 # ============================================================================
@@ -804,7 +851,7 @@ def info() -> dict:
     from config.settings import CHROMA_DIR, LLM_MODEL, VISION_LLM_MODEL, EMBED_MODEL
     
     info_dict = {
-        "version": "0.1.0",
+        "version": __version__,
         "database_path": CHROMA_DIR,
         "llm_model": LLM_MODEL,
         "vision_model": VISION_LLM_MODEL,
@@ -965,7 +1012,7 @@ __all__ = [
 # Module-level docstring for help()
 # ============================================================================
 
-__version__ = "0.1.0"
+__version__ = "0.3.2"
 __author__ = "Chen Li"
 
 if __name__ == "__main__":
