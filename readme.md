@@ -2,6 +2,7 @@
 
 > **A modular, intelligent research assistant that combines literature search, image analysis, and paper review in one conversational interface.**
 
+[![PyPI version](https://badge.fury.io/py/aibioagent.svg)](https://pypi.org/project/aibioagent/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![LangChain](https://img.shields.io/badge/🦜-LangChain-green.svg)](https://langchain.com/)
@@ -49,6 +50,9 @@ The **AI Scientist** project is a multi-agent framework that unifies **retrieval
 ```bash
 pip install aibioagent
 ```
+
+**Package Links:**
+- 📦 PyPI: https://pypi.org/project/aibioagent/
 
 ### Quick Start (3 lines)
 ```python
