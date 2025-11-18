@@ -33,13 +33,27 @@ To actually use the AI Scientist system, you need an OpenAI API key.
 
 ### Step 2: Configure the Key
 
-**Option A: Environment Variable (Recommended)**
+**Option A: Using Python Code (Recommended)**
+```python
+import aibioagent as aba
+
+# Set API key - automatically saves to .env file
+aba.set_api_key("sk-your-key-here")
+# ✅ API key set and saved to .env
+```
+
+This method:
+- ✅ Automatically creates `.env` file in current directory
+- ✅ Persists across sessions
+- ✅ No manual file editing needed
+
+**Option B: Manual .env File**
 ```bash
-# Create .env file in project root
+# Create .env file in current directory
 echo "OPENAI_API_KEY=sk-your-key-here" > .env
 ```
 
-**Option B: System Environment Variable**
+**Option C: System Environment Variable**
 ```bash
 # For macOS/Linux (add to ~/.bashrc or ~/.zshrc)
 export OPENAI_API_KEY="sk-your-key-here"
@@ -51,18 +65,27 @@ setx OPENAI_API_KEY "sk-your-key-here"
 ### Step 3: Verify Setup
 
 ```python
-# Test if key is loaded
-python -c "from config.settings import OPENAI_API_KEY; print('✅ API key loaded')"
+import aibioagent as aba
+
+# Check if API key is configured
+key = aba.get_api_key()
+if key:
+    print(f"✅ API key configured: {key[:10]}...")
+else:
+    print("❌ No API key found")
 ```
 
 ### Step 4: Run the Application
 
-```bash
-# Web UI
-python main.py
+```python
+import aibioagent as aba
 
-# CLI mode
-python main.py -m cli
+# For interactive web interface
+aba.chat()
+
+# Or use programmatically
+response = aba.ask("What is adaptive optics in microscopy?")
+print(response)
 ```
 
 ## Cost Considerations
@@ -76,9 +99,10 @@ For test purposes, could choose cheaper models.
 ## Troubleshooting
 
 ### "OpenAI API key not found"
-- Check `.env` file exists in project root
+- Use `aba.set_api_key("sk-your-key")` to configure it programmatically
+- Check `.env` file exists in current working directory (not project root)
 - Verify key starts with `sk-`
-- Try loading with: `python -c "from config.settings import OPENAI_API_KEY; print(OPENAI_API_KEY)"`
+- Test with: `aba.get_api_key()`
 
 ### "Invalid API key"
 - Key may be revoked - create new one
