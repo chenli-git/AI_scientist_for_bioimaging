@@ -441,4 +441,4 @@ MIT License - feel free to use and modify for your research!
 
 # 📧 Contact
 
-Questions? Issues? Open an issue or reach out to the maintainers!
+Questions? Issues? Open an issue or reach out to the maintainers! I am also open to new ideas!
