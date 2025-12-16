@@ -873,6 +873,100 @@ def info() -> dict:
     return info_dict
 
 
+def get_usage_stats(print_summary: bool = False, save_to_file: Optional[str] = None) -> dict:
+    """
+    Get token usage statistics and estimated costs.
+    
+    Tracks all API calls made during the current session including:
+    - LLM calls (GPT-4o, GPT-4o-mini, etc.)
+    - Embedding calls (text-embedding-3-small, etc.)
+    - Vision calls (image analysis)
+    
+    Parameters
+    ----------
+    print_summary : bool, default=False
+        If True, prints a formatted summary to console
+    save_to_file : str, optional
+        If provided, saves statistics to a JSON file at this path
+    
+    Returns
+    -------
+    dict
+        Usage statistics including:
+        - total_tokens: Total tokens consumed
+        - total_input_tokens: Input/prompt tokens
+        - total_output_tokens: Output/completion tokens
+        - total_cost_usd: Estimated cost in USD
+        - total_calls: Number of API calls
+        - by_model: Breakdown by model
+    
+    Examples
+    --------
+    >>> import aibioagent as aba
+    >>> 
+    >>> # After using the system
+    >>> aba.ask("What is CRISPR?")
+    >>> 
+    >>> # Check usage
+    >>> stats = aba.get_usage_stats(print_summary=True)
+    >>> print(f"Total cost: ${stats['total_cost_usd']:.4f}")
+    >>> 
+    >>> # Save to file
+    >>> aba.get_usage_stats(save_to_file="usage_log.json")
+    
+    Notes
+    -----
+    - Costs are estimated based on OpenAI's pricing as of December 2024
+    - Embedding token counts are approximations (4 characters ≈ 1 token)
+    - Statistics reset when Python session restarts
+    - Use reset_usage_stats() to manually reset tracking
+    
+    See Also
+    --------
+    reset_usage_stats : Reset usage statistics to zero
+    """
+    from core.usage_tracker import get_tracker
+    
+    tracker = get_tracker()
+    stats = tracker.get_stats()
+    
+    if print_summary:
+        tracker.print_summary()
+    
+    if save_to_file:
+        tracker.save_to_file(save_to_file)
+    
+    return stats
+
+
+def reset_usage_stats() -> None:
+    """
+    Reset token usage statistics to zero.
+    
+    Clears all tracked API calls, token counts, and cost estimates.
+    Useful for starting fresh tracking for specific operations.
+    
+    Examples
+    --------
+    >>> import aibioagent as aba
+    >>> 
+    >>> # Reset before specific analysis
+    >>> aba.reset_usage_stats()
+    >>> 
+    >>> # Do some work
+    >>> aba.add_papers("papers/", collection="test")
+    >>> response = aba.ask("What are the main findings?")
+    >>> 
+    >>> # Check costs for just this operation
+    >>> stats = aba.get_usage_stats(print_summary=True)
+    """
+    from core.usage_tracker import get_tracker
+    
+    tracker = get_tracker()
+    tracker.reset()
+    print("✅ Usage statistics reset")
+
+
 def get_default_urls() -> List[str]:
     """
     Get the list of default URLs included for code documentation.

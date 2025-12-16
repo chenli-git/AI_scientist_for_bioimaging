@@ -119,13 +119,7 @@ For test purposes, could choose cheaper models.
 - Make sure you have `pytest` and `pytest-mock` installed
 - Check that tests use `@patch` decorators
 
-## Alternative: Use Local Models
 
-Don't want to use OpenAI? The code can be adapted to use:
-- **Ollama** (local open-source models)
-- **Anthropic Claude**
-- **Azure OpenAI**
-- **Any OpenAI-compatible API**
 
 Modify `core/llm_client.py` to use your preferred provider.
 

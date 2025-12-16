@@ -18,6 +18,7 @@ The **AI Scientist** project is a multi-agent framework that unifies **retrieval
 - 📚 **RAG-Powered** - Answers grounded in your scientific literature database
 - 🎯 **Smart Routing** - Automatically picks the right agent for your task
 - ⚙️ **Configurable Models** - Choose your LLM, vision, and embedding models
+- 💰 **Cost Tracking** - Monitor token usage and API costs in real-time
 
 ---
 
@@ -100,7 +101,13 @@ response = aba.ask(
     pdf_path="research_paper.pdf"
 )
 
-# 8. Check configuration
+# 8. Track usage and costs
+stats = aba.get_usage_stats()
+print(f"Total cost: ${stats['total_cost_usd']:.4f}")
+aba.get_usage_stats(print_summary=True)  # Detailed breakdown
+aba.reset_usage_stats()  # Reset tracking
+
+# 9. Check configuration
 aba.info()  # Shows current models, database path, etc.
 ```
 
@@ -220,6 +227,67 @@ The architecture is fully extensible — future agents (e.g., `DataAnalystAgent`
 ### Query & Chat
 - `ask(question, image_path, pdf_path)` - Ask the AI agent
 - `chat(mode="cli"|"gradio")` - Start interactive session
+
+### Usage Tracking & Cost Management 💰
+- `get_usage_stats(print_summary=False, save_to_file=None)` - Get token usage and estimated costs
+- `reset_usage_stats()` - Reset usage tracking to zero
+
+**Example:**
+```python
+import aibioagent as aba
+
+# Do some work
+aba.ask("What is CRISPR?")
+aba.ask("Explain microscopy techniques")
+
+# Check costs
+stats = aba.get_usage_stats(print_summary=True)
+print(f"Total cost: ${stats['total_cost_usd']:.4f}")
+
+# Save detailed log
+aba.get_usage_stats(save_to_file="usage_log.json")
+```
+
+**Output:**
+```
+======================================================================
+Token Usage & Cost Summary
+======================================================================
+Session Start: 2024-12-15T10:30:00
+
+API Calls:
+  Total Calls:      5
+  LLM Calls:        4
+  Embedding Calls:  1
+  Vision Calls:     0
+
+Token Usage:
+  Input Tokens:     3,420
+  Output Tokens:    856
+  Total Tokens:     4,276
+
+Estimated Cost:
+  Total Cost (USD): $0.0012
+  ⚠️  Note: Estimates based on Dec 2024 pricing
+
+Breakdown by Model:
+  gpt-4o-mini:
+    Calls:        4
+    Total Tokens: 4,120
+    Cost (USD):   $0.0011
+  text-embedding-3-small:
+    Calls:        1
+    Total Tokens: 156
+    Cost (USD):   $0.0000
+======================================================================
+```
+
+**Why Cost Tracking Matters:**
+- 💰 **Budget Management**: Set spending limits and track costs during experiments
+- 🔍 **Model Comparison**: Compare costs between different models (gpt-4o vs gpt-4o-mini)
+- 📊 **Usage Optimization**: Identify expensive operations and optimize workflows
+- 📈 **Reporting**: Generate cost reports for grant proposals or institutional billing
+- ⚠️ **Real-time Alerts**: Monitor costs during long-running operations
 
 ### Advanced
 - `get_scientist_agent()` - Direct agent access

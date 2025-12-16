@@ -21,6 +21,10 @@ aba.quickstart(api_key="sk-your-key", pdf_folder="papers/")
 # Ask questions
 response = aba.ask("What is CRISPR?")
 
+# Track usage and costs 💰
+stats = aba.get_usage_stats(print_summary=True)
+print(f"Total cost: ${stats['total_cost_usd']:.4f}")
+
 # Add more papers
 aba.add_papers("new_papers/", collection="new_research")
 
@@ -41,6 +45,10 @@ aba.search_collection("query", "collection_name")
 - ✅ `get_api_key()` - Get current API key
 - ✅ `info()` - Show configuration and package info
 - ✅ `quickstart(api_key, pdf_folder)` - One-command setup
+
+### Usage Tracking & Cost Management 💰
+- ✅ `get_usage_stats(print_summary, save_to_file)` - Get token usage and estimated costs
+- ✅ `reset_usage_stats()` - Reset usage tracking to zero
 
 ### Knowledge Base - Papers
 - ✅ `add_papers(folder, collection, chunk_size, chunk_overlap, verbose)` 
@@ -175,6 +183,27 @@ import my_analysis_library
 # Combine with existing code
 results = my_analysis_library.analyze("image.tif")
 ai_suggestion = aba.ask(f"I found {results['cell_count']} cells. What next?")
+```
+
+### Use Case 6: Cost Monitoring & Budget Management 💰
+```python
+import aibioagent as aba
+
+# Reset tracking before a specific task
+aba.reset_usage_stats()
+
+# Do expensive operations
+aba.add_papers("large_dataset/", collection="papers")
+for i in range(100):
+    response = aba.ask(f"Question {i}")
+
+# Check costs and save report
+stats = aba.get_usage_stats(print_summary=True)
+if stats['total_cost_usd'] > 5.0:
+    print("⚠️  Budget threshold exceeded!")
+    
+# Save detailed log
+aba.get_usage_stats(save_to_file="cost_report.json")
 ```
 
 ---

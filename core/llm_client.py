@@ -1,27 +1,67 @@
 # core/llm_client.py
 from langchain_openai import ChatOpenAI
 from config.settings import OPENAI_API_KEY, LLM_MODEL, VISION_LLM_MODEL
+from core.usage_tracker import get_tracker
 import base64, io
 import tifffile
 from pathlib import Path
 import numpy as np
 from PIL import Image
 
-def get_llm(temperature=0.2):
-    """Return a ready-to-use LLM client."""
+def get_llm(temperature=0.2, track_usage=True):
+    """
+    Return a ready-to-use LLM client with optional usage tracking.
+    
+    Parameters
+    ----------
+    temperature : float
+        Model temperature (0.0 to 1.0)
+    track_usage : bool
+        If True, tracks token usage and costs
+    """
     llm = ChatOpenAI(
         api_key=OPENAI_API_KEY,
         model=LLM_MODEL,
         temperature=temperature
     )
+    
+    if track_usage:
+        # Wrap invoke to track usage
+        original_invoke = llm.invoke
+        def tracked_invoke(*args, **kwargs):
+            result = original_invoke(*args, **kwargs)
+            # Extract token usage from response
+            if hasattr(result, 'response_metadata'):
+                usage = result.response_metadata.get('token_usage', {})
+                if usage:
+                    tracker = get_tracker()
+                    tracker.track_llm_call(
+                        model=LLM_MODEL,
+                        input_tokens=usage.get('prompt_tokens', 0),
+                        output_tokens=usage.get('completion_tokens', 0)
+                    )
+            return result
+        llm.invoke = tracked_invoke
+    
     return llm
 
-def get_vision_llm(temperature=0.2):
+def get_vision_llm(temperature=0.2, track_usage=True):
+    """
+    Return a vision-capable LLM client with optional usage tracking.
+    
+    Parameters
+    ----------
+    temperature : float
+        Model temperature (0.0 to 1.0)
+    track_usage : bool
+        If True, tracks token usage and costs
+    """
     llm = ChatOpenAI(
         api_key=OPENAI_API_KEY,
         model=VISION_LLM_MODEL,              # must be a vision-capable model
         temperature=temperature
     )
+    
     # Add helper method for image encoding
     def invoke_with_image(prompt_text: str, image_path: str):
         """
@@ -37,8 +77,21 @@ def get_vision_llm(temperature=0.2):
                 ],
             }
         ]
-        return llm.invoke(message)
-    #llm.invoke_with_image = invoke_with_image
+        result = llm.invoke(message)
+        
+        # Track usage for vision calls
+        if track_usage and hasattr(result, 'response_metadata'):
+            usage = result.response_metadata.get('token_usage', {})
+            if usage:
+                tracker = get_tracker()
+                tracker.track_vision_call(
+                    model=VISION_LLM_MODEL,
+                    input_tokens=usage.get('prompt_tokens', 0),
+                    output_tokens=usage.get('completion_tokens', 0)
+                )
+        
+        return result
+    
     return llm, invoke_with_image
 
 def _encode_image(image_path: str) -> str:
