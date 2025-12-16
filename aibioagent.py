@@ -1106,7 +1106,7 @@ __all__ = [
 # Module-level docstring for help()
 # ============================================================================
 
-__version__ = "0.3.2"
+__version__ = "1.0.0"
 __author__ = "Chen Li"
 
 if __name__ == "__main__":
